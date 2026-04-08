@@ -15,7 +15,7 @@ st.subheader("2026 yil yanvar oyiga oid moliyaviy hisobot")
 st.divider()
 
 # ====================== MA'LUMOTNI O'QISH ======================
-file_path = r'D:\Data_analitika_portfolio\buxoro_soliq.csv.csv'
+file_path = "buxoro_soliq.csv.csv"
 
 df = pd.read_csv(file_path, 
                  sep=',', 

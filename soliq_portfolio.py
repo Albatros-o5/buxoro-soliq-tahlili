@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
+
 # ====================== SAHIFA SOZLAMALARI ======================
 st.set_page_config(
     page_title="Buxoro Soliq Tahlili",

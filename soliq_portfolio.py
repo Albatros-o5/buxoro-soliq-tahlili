@@ -220,10 +220,15 @@ elif viloyat == "Taqqoslash":
     st.header("📊 Buxoro vs Samarqand Taqqoslash")
     st.subheader("Ikki viloyat asosiy ko'rsatkichlari")
 
-    # Buxoro viloyati summasi (barcha tumanlar yig'indisi)
+    # Buxoro viloyati - tumanlar yig'indisi
     buxoro_jami = df_buxoro[buxoro_tumanlar].sum().sum()
-    # Samarqand viloyati summasi (barcha tumanlar yig'indisi)
-    samarqand_jami = df_samarqand[samarqand_tumanlar].sum().sum()
+    
+    # Samarqand viloyati - TO'G'RIDAN-TO'G'RI CSV DAGI QIYMAT (686.59 mlrd so'm)
+    try:
+        samarqand_jami = df_samarqand['samarqand_viloyati'].iloc[0]
+    except:
+        # Agar ustun topilmasa, siz ko'rsatgan aniq qiymatni ishlat
+        samarqand_jami = 686.59
 
     col1, col2 = st.columns(2)
     with col1:

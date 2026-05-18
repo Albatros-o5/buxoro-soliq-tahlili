@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-# ====================== SAHIFA SOZLAMALARI ======================
+#Sahifa settings
 st.set_page_config(
     page_title="Buxoro va Samarqand Soliq Tahlili",
     page_icon="📊",
@@ -15,7 +15,7 @@ st.title("📊 Buxoro va Samarqand Viloyati Soliq Tahlili")
 st.subheader("2026 yil yanvar (Buxoro) va mart (Samarqand) oylariga oid moliyaviy hisobot")
 st.divider()
 
-# ====================== MA'LUMOTNI O'QISH ======================
+#Ma'lumot olish
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 buxoro_path = os.path.join(BASE_DIR, "buxoro_soliq.csv.csv")
@@ -27,10 +27,10 @@ df_samarqand = pd.read_csv(samarqand_path, sep=',', encoding='utf-8', decimal='.
 df_buxoro.columns = df_buxoro.columns.str.strip()
 df_samarqand.columns = df_samarqand.columns.str.strip()
 
-# ====================== VILOYAT TANLASH ======================
+#Viloyat tanlash
 viloyat = st.sidebar.radio("Viloyatni tanlang:", ["Buxoro", "Samarqand", "Taqqoslash"])
 
-# ====================== TUMAN USTUNLARI ======================
+#Tuman ustunlari
 buxoro_tumanlar = [
     'olot_tumani', 'buxoro_tumani', 'vobkent_tumani', 'gijduvon_tumani',
     'kogon_tumani', 'qorakol_tumani', 'qorovulbozor_tumani', 'peshko_tumani',
@@ -46,7 +46,7 @@ samarqand_tumanlar = [
     'kattaqorgon_shahri'
 ]
 
-# ====================== FUNKSIYA ======================
+#funksiya
 def long_format(df, tuman_cols):
     df_long = df.melt(
         id_vars=['indikatorlar'],
@@ -157,7 +157,7 @@ def pie_grafik(df, viloyat_col):
     plt.tight_layout()
     st.pyplot(fig)
 
-# ====================== BUXORO ======================
+#buxoro
 if viloyat == "Buxoro":
     st.header("🏙️ Buxoro Viloyati")
     df_long = long_format(df_buxoro, buxoro_tumanlar)
@@ -186,7 +186,7 @@ if viloyat == "Buxoro":
         st.subheader("Soliq turlari bo'yicha Pie Chart")
         pie_grafik(df_buxoro, "buxoro_viloyati")
 
-# ====================== SAMARQAND ======================
+#Samarqand
 elif viloyat == "Samarqand":
     st.header("🏙️ Samarqand Viloyati")
     df_long = long_format(df_samarqand, samarqand_tumanlar)
@@ -215,7 +215,7 @@ elif viloyat == "Samarqand":
         st.subheader("Soliq turlari bo'yicha Pie Chart")
         pie_grafik(df_samarqand, "samarqand_viloyati")
 
-# ====================== TAQQOSLASH ======================
+#taqqoslash
 elif viloyat == "Taqqoslash":
     st.header("📊 Buxoro vs Samarqand Taqqoslash")
     st.subheader("Ikki viloyat asosiy ko'rsatkichlari")
@@ -249,7 +249,9 @@ elif viloyat == "Taqqoslash":
         plt.tight_layout()
         st.pyplot(fig)
 
-# ====================== FOOTER ======================
+
+
+
 st.divider()
 col1, col2 = st.columns(2)
 with col1:

@@ -2,87 +2,80 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-
+import os
 
 # ====================== SAHIFA SOZLAMALARI ======================
 st.set_page_config(
-    page_title="Buxoro va Samarqand viloyati soliq tahlili",
+    page_title="Buxoro va Samarqand Soliq Tahlili",
     page_icon="📊",
     layout="wide"
 )
 
 st.title("📊 Buxoro va Samarqand Viloyati Soliq Tahlili")
-st.subheader("2026 yil yanvar oyiga oid moliyaviy hisobot")
+st.subheader("2026 yil mart oyiga oid moliyaviy hisobot")
 st.divider()
 
 # ====================== MA'LUMOTNI O'QISH ======================
-import os
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-file_path = os.path.join(BASE_DIR, "buxoro_soliq.csv.csv")
 
-df = pd.read_csv(file_path)
+buxoro_path = os.path.join(BASE_DIR, "buxoro_soliq.csv.csv")
+samarqand_path = os.path.join(BASE_DIR, "samarqand_soliq_2026_mart.csv")
 
-df = pd.read_csv(file_path, 
-                 sep=',', 
-                 encoding='utf-8', 
-                 decimal='.', 
-                 skipinitialspace=True)
+df_buxoro = pd.read_csv(buxoro_path, sep=',', encoding='utf-8', decimal='.', skipinitialspace=True)
+df_samarqand = pd.read_csv(samarqand_path, sep=',', encoding='utf-8', decimal='.', skipinitialspace=True)
 
-df.columns = df.columns.str.strip()
+df_buxoro.columns = df_buxoro.columns.str.strip()
+df_samarqand.columns = df_samarqand.columns.str.strip()
 
-# ====================== LONG FORMAT ======================
-tuman_columns = [
+# ====================== VILOYAT TANLASH ======================
+viloyat = st.sidebar.radio("Viloyatni tanlang:", ["Buxoro", "Samarqand", "Taqqoslash"])
+
+# ====================== TUMAN USTUNLARI ======================
+buxoro_tumanlar = [
     'olot_tumani', 'buxoro_tumani', 'vobkent_tumani', 'gijduvon_tumani',
     'kogon_tumani', 'qorakol_tumani', 'qorovulbozor_tumani', 'peshko_tumani',
     'romitan_tumani', 'jondor_tumani', 'shofirkon_tumani',
     'buxoro_shaxar', 'kogon_shaxar'
 ]
 
-df_long = df.melt(
-    id_vars=['indikatorlar'],
-    value_vars=tuman_columns,
-    var_name='tuman',
-    value_name='tushum'
-)
+samarqand_tumanlar = [
+    'viloyat_byudjeti', 'oqdaryo_tumani', 'bulungur_tumani', 'jomboy_tumani',
+    'ishtixon_tumani', 'kattaqorgon_tumani', 'qushrabod_tumani', 'narpay_tumani',
+    'payariq_tumani', 'pastdargom_tumani', 'paxtachi_tumani', 'samarqand_tumani',
+    'nurobod_tumani', 'urgut_tumani', 'toyloq_tumani', 'samarqand_shahri',
+    'kattaqorgon_shahri'
+]
 
-df_long['tuman'] = df_long['tuman'].str.replace('_', ' ').str.title()
+# ====================== FUNKSIYA ======================
+def long_format(df, tuman_cols):
+    df_long = df.melt(
+        id_vars=['indikatorlar'],
+        value_vars=tuman_cols,
+        var_name='tuman',
+        value_name='tushum'
+    )
+    df_long['tuman'] = df_long['tuman'].str.replace('_', ' ').str.title()
+    return df_long
 
+def kpi_kartalar(df, viloyat_nomi, viloyat_col):
+    st.subheader("Asosiy Ko'rsatkichlar")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        davlat = df['davlat_byudjeti'].iloc[0]
+        st.metric("💰 Davlat Byudjeti", f"{davlat:,.2f} mlrd so'm")
+    with col2:
+        respublika = df['respublika_byudjeti'].iloc[0]
+        st.metric("🏛️ Respublika Byudjeti", f"{respublika:,.2f} mlrd so'm")
+    with col3:
+        viloyat = df[viloyat_col].iloc[0]
+        st.metric(f"🌍 {viloyat_nomi}", f"{viloyat:,.2f} mlrd so'm")
+    st.divider()
 
-# ====================== KPI KARTALAR ======================
-st.subheader("Asosiy Ko'rsatkichlar")
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.metric("💰 Davlat Byudjeti", "27,269.86 mlrd so'm")
-with col2:
-    st.metric("🏛️ Respublika Byudjeti", "21,846.63 mlrd so'm")
-with col3:
-    st.metric("🌍 Buxoro Viloyati", "363.97 mlrd so'm")
-
-st.divider()
-
-if st.checkbox("Data"):
-   st.subheader("📋 Raw Data ")
-   st.dataframe(df, use_container_width=True)
-   st.divider()
-
-# ====================== CHECKBOXLAR ======================
-show_tuman = st.checkbox("Tumanlar bo'yicha umumiy soliq tushumlari")
-show_soliq = st.checkbox("Soliqlar bo'yicha umumiy tushumlari")
-show_heatmap = st.checkbox("Tumanlar va Soliq Turlari bo'yicha Heatmap")
-show_byudjet = st.checkbox("Davlat vs Respublika vs Buxoro Viloyati")
-show_pie = st.checkbox(" Soliq turlari bo'yicha Pie Chart")
-
-# ====================== 1. TUMANLAR GRAFIKI ======================
-if show_tuman:
-    st.subheader("Tumanlar bo'yicha umumiy soliq tushumlari")
+def tumanlar_grafik(df_long):
     result = df_long.groupby("tuman")["tushum"].sum().sort_values(ascending=False)
-    
     fig, ax = plt.subplots(figsize=(15, 6))
-    result.plot(kind='bar', color=sns.color_palette("Blues_r", len(result)), 
+    result.plot(kind='bar', color=sns.color_palette("Blues_r", len(result)),
                 edgecolor='black', ax=ax)
-    
     ax.set_xlabel("Tuman / Shahar", fontsize=14, family="Times New Roman")
     ax.set_ylabel("Umumiy Tushum (mlrd so'm)", fontsize=14, family="Times New Roman")
     plt.xticks(rotation=45, ha='right')
@@ -90,37 +83,27 @@ if show_tuman:
     st.pyplot(fig)
     st.dataframe(result.round(2), use_container_width=True)
 
-# ====================== 2. SOLIQLAR GRAFIKI ======================
-if show_soliq:
-    st.subheader("Soliqlar bo'yicha umumiy tushumlar")
+def soliqlar_grafik(df_long):
     result = df_long.groupby("indikatorlar")["tushum"].sum().sort_values(ascending=True)
-    
     fig, ax = plt.subplots(figsize=(12, 9))
     sns.barplot(x=result.values, y=result.index, palette="viridis", ax=ax)
-    
-    ax.set_title("Soliqlar bo'yicha umumiy tushumlar (mlrd so'm)", 
+    ax.set_title("Soliqlar bo'yicha umumiy tushumlar (mlrd so'm)",
                  fontsize=16, pad=15, family="Times New Roman")
     ax.set_xlabel("Tushum (mlrd so'm)")
     ax.set_ylabel("Indikatorlar")
     ax.grid(axis='x', alpha=0.3)
-    
     for i, v in enumerate(result.values):
         ax.text(v + 0.5, i, f"{v:.2f}", va='center', fontsize=11, fontweight='bold')
-    
     plt.tight_layout()
     st.pyplot(fig)
     st.dataframe(result.round(2).reset_index(), use_container_width=True)
 
-# ====================== 3. HEATMAP ======================
-if show_heatmap:
-    st.subheader("Tumanlar va Soliq Turlari bo'yicha Heatmap")
-    df_pivot = df_long.pivot_table(index="indikatorlar", columns="tuman", 
+def heatmap_grafik(df_long):
+    df_pivot = df_long.pivot_table(index="indikatorlar", columns="tuman",
                                    values="tushum", aggfunc="sum")
-    
     fig, ax = plt.subplots(figsize=(16, 10))
-    sns.heatmap(df_pivot, annot=True, fmt=".1f", cmap="YlOrRd", 
+    sns.heatmap(df_pivot, annot=True, fmt=".1f", cmap="YlOrRd",
                 linewidths=0.5, linecolor='white', ax=ax)
-    
     ax.set_title("Tumanlar bo'yicha soliq turlari tahlili", fontsize=18, pad=20)
     ax.set_xlabel("Tuman / Shahar")
     ax.set_ylabel("Soliq Indikatorlari")
@@ -128,94 +111,150 @@ if show_heatmap:
     plt.tight_layout()
     st.pyplot(fig)
 
-# ====================== 4. DAVLAT vs RESPUBLIKA vs BUXORO ======================
-if show_byudjet:
-    st.subheader("📊 Davlat Byudjeti vs Respublika Byudjeti vs Buxoro Viloyati")
-    
-    # Ma'lumotni long formatga o'tkazish
-    df_short = df[["indikatorlar", "davlat_byudjeti", "respublika_byudjeti", "buxoro_viloyati"]].melt(
-        id_vars="indikatorlar", 
-        var_name="byudjet", 
+def byudjet_grafik(df, viloyat_col, viloyat_nomi):
+    df_short = df[["indikatorlar", "davlat_byudjeti", "respublika_byudjeti", viloyat_col]].melt(
+        id_vars="indikatorlar",
+        var_name="byudjet",
         value_name="summa"
     )
-    
-    # Grafik yaratish
     fig, ax = plt.subplots(figsize=(14, 7))
-    
-    sns.barplot(
-        data=df_short,
-        x="indikatorlar",
-        y="summa",
-        hue="byudjet",
-        palette=["steelblue", "coral", "green"],
-        ax=ax
-    )
-    
+    sns.barplot(data=df_short, x="indikatorlar", y="summa", hue="byudjet",
+                palette=["steelblue", "coral", "green"], ax=ax)
     plt.xticks(rotation=45, ha="right")
-    plt.title("Davlat vs Respublika vs Buxoro viloyati", 
+    plt.title(f"Davlat vs Respublika vs {viloyat_nomi}",
               fontweight="bold", fontsize=16, family="Times New Roman")
     plt.xlabel("Indikatorlar", fontsize=13, family="Times New Roman")
     plt.ylabel("Tushum (mlrd so'm)", fontsize=13, family="Times New Roman")
-    
-    # Legendni to'g'rilash
     handles, _ = ax.get_legend_handles_labels()
-    ax.legend(
-        handles=handles,
-        labels=["Davlat Byudjeti", "Respublika Byudjeti", "Buxoro viloyati"],
-        title="Byudjet turi",
-        loc="upper right"
-    )
-    
+    ax.legend(handles=handles,
+              labels=["Davlat Byudjeti", "Respublika Byudjeti", viloyat_nomi],
+              title="Byudjet turi", loc="upper right")
     plt.tight_layout()
     st.pyplot(fig)
-    
-    # Jadvalni chiqarish (to'g'ri yozilishi)
-    st.subheader("Davlat, Respublika va Buxoro Viloyati bo'yicha batafsil ma'lumot")
-    st.dataframe(
-        df[["indikatorlar", "davlat_byudjeti", "respublika_byudjeti", "buxoro_viloyati"]],
-        use_container_width=True
-    )
+    st.dataframe(df[["indikatorlar", "davlat_byudjeti", "respublika_byudjeti", viloyat_col]],
+                 use_container_width=True)
 
-# ====================== 5. PIE CHART (Checkbox bilan) ======================
-if show_pie:
-    st.subheader("Soliq turlari bo'yicha umumiy tushumlar (Pie Chart)")
-    
-    df_short = df[["indikatorlar", "davlat_byudjeti", "respublika_byudjeti", "buxoro_viloyati"]].melt(
-        id_vars="indikatorlar", 
-        var_name="byudjet", 
+def pie_grafik(df, viloyat_col):
+    df_short = df[["indikatorlar", "davlat_byudjeti", "respublika_byudjeti", viloyat_col]].melt(
+        id_vars="indikatorlar",
+        var_name="byudjet",
         value_name="summa"
     )
-    
     top_pie = df_short.groupby("indikatorlar")["summa"].sum().sort_values(ascending=False)
-    
     jami = top_pie.sum()
     foizlar = (top_pie.values / jami * 100)
-    
     fig, ax = plt.subplots(figsize=(12, 10))
-    wedges, texts = ax.pie(
-        top_pie.values,
-        labels=None,
-        colors=sns.color_palette("Set3", len(top_pie)),
-        startangle=90
-    )
-    
+    wedges, texts = ax.pie(top_pie.values, labels=None,
+                           colors=sns.color_palette("Set3", len(top_pie)), startangle=90)
     legend_labels = [
         f"{label}: {value:,.1f} mlrd so'm ({foiz:.1f}%)"
         for label, value, foiz in zip(top_pie.index, top_pie.values, foizlar)
     ]
-    
-    ax.legend(wedges, legend_labels, title="Soliq turlari", 
+    ax.legend(wedges, legend_labels, title="Soliq turlari",
               loc="center left", bbox_to_anchor=(1, 0.5), fontsize=10)
-    
-    ax.set_title("Soliq turlari bo'yicha umumiy tushumlar", 
+    ax.set_title("Soliq turlari bo'yicha umumiy tushumlar",
                  fontsize=16, fontweight="bold", pad=20)
-    
     plt.tight_layout()
     st.pyplot(fig)
 
-if st.button("Ma'lumot o'rnida"):
-    st.text("Bu ma'lumot openbudget.uz saytidan olingan")
-    
-if st.button("By"):
-    st.text("Muhammadjon Yoriyev")
+# ====================== BUXORO ======================
+if viloyat == "Buxoro":
+    st.header("🏙️ Buxoro Viloyati")
+    df_long = long_format(df_buxoro, buxoro_tumanlar)
+    kpi_kartalar(df_buxoro, "Buxoro Viloyati", "buxoro_viloyati")
 
+    if st.checkbox("Raw Data"):
+        st.dataframe(df_buxoro, use_container_width=True)
+
+    if st.checkbox("Tumanlar bo'yicha umumiy soliq tushumlari"):
+        st.subheader("Tumanlar bo'yicha umumiy soliq tushumlari")
+        tumanlar_grafik(df_long)
+
+    if st.checkbox("Soliqlar bo'yicha umumiy tushumlar"):
+        st.subheader("Soliqlar bo'yicha umumiy tushumlar")
+        soliqlar_grafik(df_long)
+
+    if st.checkbox("Heatmap"):
+        st.subheader("Tumanlar va Soliq Turlari bo'yicha Heatmap")
+        heatmap_grafik(df_long)
+
+    if st.checkbox("Davlat vs Respublika vs Buxoro"):
+        st.subheader("Davlat vs Respublika vs Buxoro Viloyati")
+        byudjet_grafik(df_buxoro, "buxoro_viloyati", "Buxoro Viloyati")
+
+    if st.checkbox("Pie Chart"):
+        st.subheader("Soliq turlari bo'yicha Pie Chart")
+        pie_grafik(df_buxoro, "buxoro_viloyati")
+
+# ====================== SAMARQAND ======================
+elif viloyat == "Samarqand":
+    st.header("🏙️ Samarqand Viloyati")
+    df_long = long_format(df_samarqand, samarqand_tumanlar)
+    kpi_kartalar(df_samarqand, "Samarqand Viloyati", "samarqand_viloyati")
+
+    if st.checkbox("Raw Data"):
+        st.dataframe(df_samarqand, use_container_width=True)
+
+    if st.checkbox("Tumanlar bo'yicha umumiy soliq tushumlari"):
+        st.subheader("Tumanlar bo'yicha umumiy soliq tushumlari")
+        tumanlar_grafik(df_long)
+
+    if st.checkbox("Soliqlar bo'yicha umumiy tushumlar"):
+        st.subheader("Soliqlar bo'yicha umumiy tushumlar")
+        soliqlar_grafik(df_long)
+
+    if st.checkbox("Heatmap"):
+        st.subheader("Tumanlar va Soliq Turlari bo'yicha Heatmap")
+        heatmap_grafik(df_long)
+
+    if st.checkbox("Davlat vs Respublika vs Samarqand"):
+        st.subheader("Davlat vs Respublika vs Samarqand Viloyati")
+        byudjet_grafik(df_samarqand, "samarqand_viloyati", "Samarqand Viloyati")
+
+    if st.checkbox("Pie Chart"):
+        st.subheader("Soliq turlari bo'yicha Pie Chart")
+        pie_grafik(df_samarqand, "samarqand_viloyati")
+
+# ====================== TAQQOSLASH ======================
+elif viloyat == "Taqqoslash":
+    st.header("📊 Buxoro vs Samarqand Taqqoslash")
+    st.subheader("Ikki viloyat asosiy ko'rsatkichlari")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("💰 Buxoro — Davlat Byudjeti",
+                  f"{df_buxoro['davlat_byudjeti'].iloc[0]:,.2f} mlrd so'm")
+        st.metric("🌍 Buxoro Viloyati",
+                  f"{df_buxoro['buxoro_viloyati'].iloc[0]:,.2f} mlrd so'm")
+    with col2:
+        st.metric("💰 Samarqand — Davlat Byudjeti",
+                  f"{df_samarqand['davlat_byudjeti'].iloc[0]:,.2f} mlrd so'm")
+        st.metric("🌍 Samarqand Viloyati",
+                  f"{df_samarqand['samarqand_viloyati'].iloc[0]:,.2f} mlrd so'm")
+
+    st.divider()
+
+    if st.checkbox("Viloyatlar taqqoslash grafigi"):
+        buxoro_jami = df_buxoro['buxoro_viloyati'].sum()
+        samarqand_jami = df_samarqand['samarqand_viloyati'].sum()
+
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.bar(["Buxoro", "Samarqand"], [buxoro_jami, samarqand_jami],
+               color=["steelblue", "coral"], edgecolor="black")
+        ax.set_title("Buxoro vs Samarqand — Umumiy tushum",
+                     fontsize=16, fontweight="bold")
+        ax.set_ylabel("Tushum (mlrd so'm)")
+        for i, v in enumerate([buxoro_jami, samarqand_jami]):
+            ax.text(i, v + 1, f"{v:.2f}", ha='center', fontweight='bold')
+        plt.tight_layout()
+        st.pyplot(fig)
+
+# ====================== FOOTER ======================
+st.divider()
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("📌 Ma'lumot manbasi"):
+        st.info("Bu ma'lumot openbudget.uz saytidan olingan")
+with col2:
+    if st.button("👤 Muallif"):
+        st.info("Muhammadjon Yoriyev")

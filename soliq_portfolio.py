@@ -12,7 +12,7 @@ st.set_page_config(
 )
 
 st.title("📊 Buxoro va Samarqand Viloyati Soliq Tahlili")
-st.subheader("2026 yil mart oyiga oid moliyaviy hisobot")
+st.subheader("2026 yil yanvar (Buxoro) va mart (Samarqand) oylariga oid moliyaviy hisobot")
 st.divider()
 
 # ====================== MA'LUMOTNI O'QISH ======================

@@ -220,24 +220,24 @@ elif viloyat == "Taqqoslash":
     st.header("📊 Buxoro vs Samarqand Taqqoslash")
     st.subheader("Ikki viloyat asosiy ko'rsatkichlari")
 
+    # Buxoro viloyati summasi (barcha tumanlar yig'indisi)
+    buxoro_jami = df_buxoro[buxoro_tumanlar].sum().sum()
+    # Samarqand viloyati summasi (barcha tumanlar yig'indisi)
+    samarqand_jami = df_samarqand[samarqand_tumanlar].sum().sum()
+
     col1, col2 = st.columns(2)
     with col1:
         st.metric("💰 Buxoro — Davlat Byudjeti",
                   f"{df_buxoro['davlat_byudjeti'].iloc[0]:,.2f} mlrd so'm")
-        st.metric("🌍 Buxoro Viloyati",
-                  f"{df_buxoro['buxoro_viloyati'].iloc[0]:,.2f} mlrd so'm")
+        st.metric("🌍 Buxoro Viloyati", f"{buxoro_jami:,.2f} mlrd so'm")
     with col2:
         st.metric("💰 Samarqand — Davlat Byudjeti",
                   f"{df_samarqand['davlat_byudjeti'].iloc[0]:,.2f} mlrd so'm")
-        st.metric("🌍 Samarqand Viloyati",
-                  f"{df_samarqand['samarqand_viloyati'].iloc[0]:,.2f} mlrd so'm")
+        st.metric("🌍 Samarqand Viloyati", f"{samarqand_jami:,.2f} mlrd so'm")
 
     st.divider()
 
     if st.checkbox("Viloyatlar taqqoslash grafigi"):
-        buxoro_jami = df_buxoro['buxoro_viloyati'].sum()
-        samarqand_jami = df_samarqand['samarqand_viloyati'].sum()
-
         fig, ax = plt.subplots(figsize=(8, 5))
         ax.bar(["Buxoro", "Samarqand"], [buxoro_jami, samarqand_jami],
                color=["steelblue", "coral"], edgecolor="black")
@@ -248,9 +248,6 @@ elif viloyat == "Taqqoslash":
             ax.text(i, v + 1, f"{v:.2f}", ha='center', fontweight='bold')
         plt.tight_layout()
         st.pyplot(fig)
-
-
-
 
 st.divider()
 col1, col2 = st.columns(2)

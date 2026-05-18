@@ -5,7 +5,7 @@ import seaborn as sns
 
 # ====================== SAHIFA SOZLAMALARI ======================
 st.set_page_config(
-    page_title="Buxoro Soliq Tahlili",
+    page_title="Buxoro",
     page_icon="📊",
     layout="wide"
 )

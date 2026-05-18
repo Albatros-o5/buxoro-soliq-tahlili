@@ -7,12 +7,12 @@ import seaborn as sns
 
 # ====================== SAHIFA SOZLAMALARI ======================
 st.set_page_config(
-    page_title="Buxoro",
+    page_title="Buxoro va Samarqand viloyati soliq tahlili",
     page_icon="📊",
     layout="wide"
 )
 
-st.title("📊 Buxoro Viloyati Soliq Tahlili")
+st.title("📊 Buxoro va Samarqand Viloyati Soliq Tahlili")
 st.subheader("2026 yil yanvar oyiga oid moliyaviy hisobot")
 st.divider()
 
